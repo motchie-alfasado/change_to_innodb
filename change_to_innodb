@@ -1,0 +1,28 @@
+#!/bin/bash
+
+mysql_user=<db_user>
+mysql_password=<db_password>
+mysql_host=<db_host>
+mysql_port=3306
+mysql_database=<db_name>
+
+dtg=`date '+%Y%m%d-%H%M%S'`
+temp_dir=/tmp/
+
+input_file=${temp_dir}/${dtg}-input.sql
+output_file=${temp_dir}/${dtg}.sql
+
+opt_mysql="--user=${mysql_user} --password=${mysql_password} --host=${mysql_host}"
+
+echo "show tables;" > ${input_file}
+
+mysql --compress -B ${opt_mysql} ${mysql_database} < ${input_file} > ${output_file}
+
+sed -i -e "1d" ${output_file} 
+sed -i -e "s/^/ALTER TABLE \`/g" ${output_file} 
+sed -i -e "s/$/\` ENGINE InnoDB;/g" ${output_file} 
+
+mysql --compress ${opt_mysql} ${mysql_database} < ${output_file} 
+
+rm ${input_file}
+rm ${output_file}
